@@ -31,8 +31,6 @@ ENV/
 .ipynb_checkpoints
 
 # Data & Models - CRITICAL to ignore these
-data/raw/
-data/processed/
 ml_core/models/
 
 # IDE
