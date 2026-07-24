@@ -42,3 +42,5 @@ ml_core/models/
 # OS
 .DS_Store
 Thumbs.db
+
+.env
