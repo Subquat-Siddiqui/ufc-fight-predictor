@@ -258,7 +258,15 @@ def build_feature_row(fighter_a: str, fighter_b: str, weight_class_encoded: int,
     else:
         row["BetterRank_Encoded"] = 0
 
-    row_df = pd.DataFrame([row])[feature_columns]
+    row_df = pd.DataFrame([row])
+
+    # Fill in any expected columns that didn't get created (e.g. asymmetric one-hot
+    # categories like BlueStance_nan having no RedStance_nan counterpart)
+    missing_cols = [col for col in feature_columns if col not in row_df.columns]
+    for col in missing_cols:
+        row_df[col] = 0
+
+    row_df = row_df[feature_columns]
     corner_mapping = {"Red": red_name, "Blue": blue_name}
 
     return row_df, corner_mapping
@@ -279,4 +287,4 @@ def predict_winner(fighter_a: str, fighter_b: str, weight_class_encoded: int,
     winner_name = corner_mapping[predicted_corner]
     confidence = probabilities[prediction]
 
-    return {"winner": winner_name, "confidence": round(float(confidence), 4)}
+    return {"winner": str(winner_name).title(), "confidence": round(float(confidence), 4)}
