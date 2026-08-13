@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from backend.app.predict import predict_winner
+from backend.app.predict import predict_winner, get_upcoming_fights
 
 router = APIRouter()
 
@@ -29,3 +29,7 @@ def predict(request: PredictionRequest):
         # Catches known errors from predict.py (e.g. no fighter history, 
         # no scheduled matchup found) and returns a proper 404 instead of a 500
         raise HTTPException(status_code=404, detail=str(e))
+
+@router.get("/upcoming-fights")
+def upcoming_fights():
+    return get_upcoming_fights()
