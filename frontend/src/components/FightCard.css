@@ -1,0 +1,52 @@
+.fight-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+}
+
+.fight-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.fighter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  text-align: center;
+}
+
+.fighter-image,
+.fighter-placeholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin-bottom: 8px;
+}
+
+.fighter-image {
+  object-fit: cover;
+}
+
+.fighter-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #444;
+  color: white;
+  font-weight: bold;
+  font-size: 28px;
+}
+
+.vs {
+  font-weight: bold;
+  font-size: 20px;
+  color: #888;
+  flex-shrink: 0;
+}
