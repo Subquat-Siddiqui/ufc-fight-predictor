@@ -1,5 +1,7 @@
 import './FightCard.css';
 
+// Builds initials from a fighter's full name (e.g. "Islam Makhachev" -> "IM"),
+// used as a fallback when no photo is available
 function getInitials(name) {
   return name
     .split(' ')
@@ -8,6 +10,8 @@ function getInitials(name) {
     .toUpperCase();
 }
 
+// Displays one matchup as a clickable card. Purely presentational - receives
+// all data (names, images, click handler) as props and doesn't fetch anything itself.
 function FightCard({ fighterAName, fighterBName, fighterAImage, fighterBImage, onSelect }) {
   return (
     <div className="fight-card" onClick={onSelect}>
