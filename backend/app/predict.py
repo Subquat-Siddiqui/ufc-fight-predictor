@@ -139,7 +139,7 @@ def get_live_odds(fighter_a: str, fighter_b: str) -> dict:
     if response.status_code != 200:
         raise ValueError(f"API request failed with status: {response.status_code}")
 
-    # obtain a list of dicts containing confirmed fiht odds for all upcoming scheduled fights
+    # obtain a list of dicts containing confirmed fight odds for all upcoming scheduled fights
     fights = response.json()
 
     # Look for the upcoming specified fight, where either fighter can be home or away
@@ -177,6 +177,52 @@ def get_live_odds(fighter_a: str, fighter_b: str) -> dict:
         raise ValueError(f"No scheduled fight found for {fighter_a} and {fighter_b}")
         
     return odds
+
+def get_upcoming_fights() -> list[dict]:
+    """
+    Retrieves all upcoming MMA fights with confirmed odds, filtered to only
+    fights where both fighters exist in our UFC dataset (best-effort filter
+    for UFC-specific fights, since the odds API covers all MMA promotions).
+
+    Returns:
+        A list of dicts, each containing fighter_a, fighter_b, and commence_time
+        for one upcoming fight.
+    """
+    url = "https://api.the-odds-api.com/v4/sports/mma_mixed_martial_arts/odds"
+
+    # Specify region, markets, and format with the request
+    response = requests.get(url, params={
+       "regions": "us",
+       "markets": "h2h",
+       "oddsFormat": "american",
+       "apiKey": os.getenv("ODDS_API_KEY")
+   })
+
+    if response.status_code != 200:
+        raise ValueError(f"API request failed with status: {response.status_code}")
+
+    # obtain a list of dicts containing confirmed fight odds for all upcoming scheduled fights
+    fights = response.json()
+
+    # Build a set of all fighter names (lowercase) that exist in our UFC dataset,
+    # used to filter out non-UFC fights from other MMA promotions
+    ufc_fighters = set(df["RedFighter"].str.lower()) | set(df["BlueFighter"].str.lower())
+
+    upcoming_fights = []
+
+    for fight in fights:
+        home = fight["home_team"]
+        away = fight["away_team"]
+
+        # Only include this fight if both fighters exist in our UFC dataset
+        if home.lower() in ufc_fighters and away.lower() in ufc_fighters:
+            upcoming_fights.append({
+                "fighter_a": home,
+                "fighter_b": away,
+                "commence_time": fight["commence_time"]
+            })
+
+    return upcoming_fights
 
 
 def odds_to_expected_value(odds: float) -> float:
