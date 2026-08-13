@@ -35,11 +35,10 @@ def get_fighter_stats(fighter_name: str) -> dict:
     Returns:
         a dict of fighter data, from their latest fight
     """
-    fighter_name = fighter_name.lower() # Not case-sensitive
 
     # Sort by newest fights, then query for the specified fighters latest fight
     df_fighter = df.sort_values(by="Date", ascending=False)
-    df_fighter = df_fighter[(df_fighter["RedFighter"].str.lower() == fighter_name) | (df_fighter["BlueFighter"].str.lower() == fighter_name)].head(1)
+    df_fighter = df_fighter[(df_fighter["RedFighter"].str.lower() == fighter_name.lower()) | (df_fighter["BlueFighter"].str.lower() == fighter_name.lower())].head(1)
 
     # Will drop the following columns as they're not specific only to the fighter we're querying for
     # Certain columns dropped here will be rebuilt once we have data from both fighters using build_feature_row
@@ -53,7 +52,7 @@ def get_fighter_stats(fighter_name: str) -> dict:
     if df_fighter.empty:
         raise ValueError(f"No fight history for {fighter_name}")
 
-    if df_fighter["RedFighter"].iloc[0].lower() == fighter_name:
+    if df_fighter["RedFighter"].iloc[0].lower() == fighter_name.lower():
         cols_to_drop = df_fighter.filter(regex='(?i)blue').columns # Columns containing data for opposing fighter
         df_fighter = df_fighter.drop(columns=cols_to_drop) # Keeping only columns pertaining to specified fighter
 
@@ -120,9 +119,6 @@ def get_live_odds(fighter_a: str, fighter_b: str) -> dict:
     Returns:
         A dict containing odds for each specified fighter
     """
-    # Ensure fighter names aren't case sensitive
-    fighter_a = fighter_a.lower()
-    fighter_b = fighter_b.lower()
 
     odds = {}
 
@@ -146,9 +142,9 @@ def get_live_odds(fighter_a: str, fighter_b: str) -> dict:
     for fight in fights:
         # Correct fight found
         if (
-            fight["home_team"].lower() == fighter_a and fight["away_team"].lower() == fighter_b
+            fight["home_team"].lower() == fighter_a.lower() and fight["away_team"].lower() == fighter_b.lower()
             or
-            fight["home_team"].lower() == fighter_b and fight["away_team"].lower() == fighter_a
+            fight["home_team"].lower() == fighter_b.lower() and fight["away_team"].lower() == fighter_a.lower()
         ):
             bookmaker = fight["bookmakers"][0] # Grab the first bookmaker
 
@@ -164,10 +160,10 @@ def get_live_odds(fighter_a: str, fighter_b: str) -> dict:
 
             # Match each outcome's price back to the correct fighter
             for outcome in h2h_market["outcomes"]:
-                name = outcome["name"].lower()
-                if name == fighter_a:
+                name = outcome["name"]
+                if name.lower() == fighter_a.lower():
                     odds[fighter_a] = outcome["price"]
-                elif name == fighter_b:
+                elif name.lower() == fighter_b.lower():
                     odds[fighter_b] = outcome["price"]
 
             break  # found our fight, stop looping
@@ -246,8 +242,6 @@ def build_feature_row(fighter_a: str, fighter_b: str, weight_class_encoded: int,
         One row of a pd.DataFrame containing information for both fighters, matching
         the column structure of ufc-master-processed.csv
     """
-    fighter_a = fighter_a.lower()
-    fighter_b = fighter_b.lower()
 
     fighter_a_stats = get_fighter_stats(fighter_a)
     fighter_b_stats = get_fighter_stats(fighter_b)
@@ -333,4 +327,4 @@ def predict_winner(fighter_a: str, fighter_b: str, weight_class_encoded: int,
     winner_name = corner_mapping[predicted_corner]
     confidence = probabilities[prediction]
 
-    return {"winner": str(winner_name).title(), "confidence": round(float(confidence), 4)}
+    return {"winner": str(winner_name), "confidence": round(float(confidence), 4)}
