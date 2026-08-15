@@ -8,6 +8,7 @@ import joblib
 import requests
 import os
 from dotenv import load_dotenv
+from datetime import datetime, timedelta, timezone
 
 load_dotenv() # For retrieving api key responsible for querying fight odds
 
@@ -180,9 +181,14 @@ def get_upcoming_fights() -> list[dict]:
     fights where both fighters exist in our UFC dataset (best-effort filter
     for UFC-specific fights, since the odds API covers all MMA promotions).
 
+    Each fight is tagged with a status: "confirmed" if it's scheduled within
+    the next 45 days (likely a real, officially booked UFC card), or "rumored"
+    if it's further out (likely speculative odds on a callout or potential
+    rematch that hasn't been officially booked yet).
+
     Returns:
-        A list of dicts, each containing fighter_a, fighter_b, and commence_time
-        for one upcoming fight.
+        A list of dicts, each containing fighter_a, fighter_b, commence_time,
+        and status ("confirmed" or "rumored") for one upcoming fight.
     """
     url = "https://api.the-odds-api.com/v4/sports/mma_mixed_martial_arts/odds"
 
@@ -204,6 +210,10 @@ def get_upcoming_fights() -> list[dict]:
     # used to filter out non-UFC fights from other MMA promotions
     ufc_fighters = set(df["RedFighter"].str.lower()) | set(df["BlueFighter"].str.lower())
 
+    # Fights scheduled within this window are treated as confirmed; anything
+    # further out is likely speculative odds on an unofficial/rumored matchup
+    cutoff = datetime.now(timezone.utc) + timedelta(days=45)
+
     upcoming_fights = []
 
     for fight in fights:
@@ -212,10 +222,14 @@ def get_upcoming_fights() -> list[dict]:
 
         # Only include this fight if both fighters exist in our UFC dataset
         if home.lower() in ufc_fighters and away.lower() in ufc_fighters:
+            commence_time = datetime.fromisoformat(fight["commence_time"].replace("Z", "+00:00"))
+            status = "confirmed" if commence_time <= cutoff else "rumored"
+
             upcoming_fights.append({
                 "fighter_a": home,
                 "fighter_b": away,
-                "commence_time": fight["commence_time"]
+                "commence_time": fight["commence_time"],
+                "status": status
             })
 
     return upcoming_fights
