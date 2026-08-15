@@ -9,7 +9,7 @@ app = FastAPI(title="UFC Fight Predictor API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # For when frontend is implemented and running on a different port
+    allow_origins=["http://localhost:5173"],  # For when frontend is implemented and running on a different port
     allow_methods=["*"],
     allow_headers=["*"],
 )
