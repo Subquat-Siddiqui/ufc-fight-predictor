@@ -47,6 +47,10 @@
 .vs {
   font-weight: bold;
   font-size: 20px;
-  color: #888;
+  color: #a0a93c;
   flex-shrink: 0;
+}
+
+.fight-card {
+  position: relative; /* needed so the badge can be positioned within the card */
 }

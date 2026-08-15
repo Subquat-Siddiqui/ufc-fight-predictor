@@ -11,10 +11,11 @@ function getInitials(name) {
 }
 
 // Displays one matchup as a clickable card. Purely presentational - receives
-// all data (names, images, click handler) as props and doesn't fetch anything itself.
-function FightCard({ fighterAName, fighterBName, fighterAImage, fighterBImage, onSelect }) {
+// all data (names, images, status, click handler) as props and doesn't fetch anything itself.
+function FightCard({ fighterAName, fighterBName, fighterAImage, fighterBImage, status, onSelect }) {
   return (
     <div className="fight-card" onClick={onSelect}>
+
       <div className="fighter">
         {fighterAImage ? (
           <img src={fighterAImage} alt={fighterAName} className="fighter-image" />
