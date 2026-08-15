@@ -69,3 +69,20 @@ export async function getFighterImage(fighterName) {
         return null;
     }
 }
+
+/**
+ * Retrieves the list of currently scheduled upcoming UFC fights from the backend.
+ *
+ * @returns {Promise<Array>} Resolves to a list of { fighter_a, fighter_b, commence_time } objects.
+ * @throws {Error} If the backend request fails.
+ */
+export async function getUpcomingFights() {
+    const response = await fetch('http://localhost:8000/upcoming-fights');
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.detail || "Failed to fetch upcoming fights");
+    }
+
+    return data;
+}
