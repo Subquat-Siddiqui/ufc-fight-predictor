@@ -1,8 +1,21 @@
 .fight-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  max-width: 600px;
+  gap: 14px;
+  max-width: 640px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 8px 20px 40px;
+}
+
+.fight-list h2 {
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-muted);
+  margin: 28px 0 4px;
+}
+
+.fight-list h2:first-child {
+  margin-top: 0;
 }

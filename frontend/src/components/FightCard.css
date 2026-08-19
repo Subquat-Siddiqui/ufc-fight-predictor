@@ -1,17 +1,21 @@
 .fight-card {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 20px;
-  border: 1px solid #ddd;
-  border-radius: 12px;
+  padding: 24px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
   cursor: pointer;
-  transition: box-shadow 0.2s ease;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .fight-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .fighter {
@@ -20,37 +24,58 @@
   align-items: center;
   flex: 1;
   text-align: center;
+  gap: 10px;
 }
 
 .fighter-image,
 .fighter-placeholder {
-  width: 100px;
-  height: 100px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
-  margin-bottom: 8px;
 }
 
 .fighter-image {
   object-fit: cover;
+  border: 2px solid var(--color-border);
 }
 
 .fighter-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #444;
+  background-color: var(--color-text);
   color: white;
-  font-weight: bold;
-  font-size: 28px;
+  font-weight: 600;
+  font-size: 26px;
+  letter-spacing: 0.5px;
+}
+
+.fighter p {
+  margin: 0;
+  font-weight: 600;
+  font-size: 15px;
 }
 
 .vs {
-  font-weight: bold;
-  font-size: 20px;
-  color: #a0a93c;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: var(--color-text-muted);
   flex-shrink: 0;
 }
 
-.fight-card {
-  position: relative; /* needed so the badge can be positioned within the card */
+.status-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.status-badge.rumored {
+  background-color: #fef3c7;
+  color: #92400e;
 }
