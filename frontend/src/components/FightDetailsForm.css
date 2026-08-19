@@ -1,0 +1,79 @@
+.fight-details-form {
+  max-width: 420px;
+  margin: 40px auto;
+  padding: 32px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.fight-details-form h2 {
+  margin: 0 0 4px;
+  font-size: 19px;
+  text-align: center;
+}
+
+.fight-details-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.fight-details-form select {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  font-size: 14px;
+  color: var(--color-text);
+  background-color: var(--color-surface);
+}
+
+.checkbox-label {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px !important;
+  text-transform: none;
+}
+
+.form-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.form-buttons button {
+  padding: 11px 22px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.15s ease;
+}
+
+.form-buttons button[type="submit"] {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.form-buttons button[type="submit"]:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.form-buttons button[type="button"] {
+  background-color: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+.form-buttons button[type="button"]:hover {
+  background-color: var(--color-border);
+}
