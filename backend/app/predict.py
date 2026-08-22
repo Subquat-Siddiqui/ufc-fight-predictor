@@ -175,11 +175,52 @@ def get_live_odds(fighter_a: str, fighter_b: str) -> dict:
         
     return odds
 
+_active_fighters_cache = None  # module-level cache, populated on first use
+
+def get_active_ufc_fighters() -> set:
+    """
+    Fetches the full UFC fighter directory from Cito API and returns a set of
+    lowercase names for fighters currently marked active. Cached in memory
+    after the first call, since the roster doesn't change frequently enough
+    to justify refetching on every request (and doing so would quickly burn
+    through the free tier's monthly quota).
+    """
+    global _active_fighters_cache
+    if _active_fighters_cache is not None:
+        return _active_fighters_cache
+
+    active_fighters = set()
+    page = 1
+
+    while True:
+        response = requests.get(
+            "https://api.citoapi.com/api/v1/ufc/fighters",
+            params={"page": page, "limit": 100},
+            headers={"x-api-key": os.getenv("CITO_API_KEY")}
+        )
+
+        if response.status_code != 200:
+            raise ValueError(f"Cito API request failed with status: {response.status_code}")
+
+        data = response.json()
+
+        for fighter in data["data"]:
+            if fighter.get("isActive"):
+                active_fighters.add(fighter["name"].lower())
+
+        if not data["meta"]["hasNextPage"]:
+            break
+        page += 1
+
+    _active_fighters_cache = active_fighters
+    return active_fighters
+
+
 def get_upcoming_fights() -> list[dict]:
     """
     Retrieves all upcoming MMA fights with confirmed odds, filtered to only
-    fights where both fighters exist in our UFC dataset (best-effort filter
-    for UFC-specific fights, since the odds API covers all MMA promotions).
+    fights where both fighters are currently active on the UFC roster
+    (via Cito API).
 
     Each fight is tagged with a status: "confirmed" if it's scheduled within
     the next 45 days (likely a real, officially booked UFC card), or "rumored"
@@ -192,7 +233,6 @@ def get_upcoming_fights() -> list[dict]:
     """
     url = "https://api.the-odds-api.com/v4/sports/mma_mixed_martial_arts/odds"
 
-    # Specify region, markets, and format with the request
     response = requests.get(url, params={
        "regions": "us",
        "markets": "h2h",
@@ -203,15 +243,10 @@ def get_upcoming_fights() -> list[dict]:
     if response.status_code != 200:
         raise ValueError(f"API request failed with status: {response.status_code}")
 
-    # obtain a list of dicts containing confirmed fight odds for all upcoming scheduled fights
     fights = response.json()
 
-    # Build a set of all fighter names (lowercase) that exist in our UFC dataset,
-    # used to filter out non-UFC fights from other MMA promotions
-    ufc_fighters = set(df["RedFighter"].str.lower()) | set(df["BlueFighter"].str.lower())
+    active_ufc_fighters = get_active_ufc_fighters()
 
-    # Fights scheduled within this window are treated as confirmed; anything
-    # further out is likely speculative odds on an unofficial/rumored matchup
     cutoff = datetime.now(timezone.utc) + timedelta(days=45)
 
     upcoming_fights = []
@@ -220,8 +255,7 @@ def get_upcoming_fights() -> list[dict]:
         home = fight["home_team"]
         away = fight["away_team"]
 
-        # Only include this fight if both fighters exist in our UFC dataset
-        if home.lower() in ufc_fighters and away.lower() in ufc_fighters:
+        if home.lower() in active_ufc_fighters and away.lower() in active_ufc_fighters:
             commence_time = datetime.fromisoformat(fight["commence_time"].replace("Z", "+00:00"))
             status = "confirmed" if commence_time <= cutoff else "rumored"
 
@@ -238,6 +272,13 @@ def get_upcoming_fights() -> list[dict]:
 def odds_to_expected_value(odds: float) -> float:
     """Converts American odds to expected value (payout per $100 bet)."""
     return odds if odds > 0 else 10000 / abs(odds)
+
+def implied_probability(odds: float) -> float:
+    """Converts American odds to the bookmaker's implied win probability."""
+    if odds > 0:
+        return 100 / (odds + 100)
+    else:
+        return abs(odds) / (abs(odds) + 100)
 
 
 def build_feature_row(fighter_a: str, fighter_b: str, weight_class_encoded: int,
@@ -325,20 +366,43 @@ def build_feature_row(fighter_a: str, fighter_b: str, weight_class_encoded: int,
 
     return row_df, corner_mapping
 
+def predict_from_odds_only(fighter_a: str, fighter_b: str) -> dict:
+    """
+    Fallback used when one or both fighters lack historical data in our training
+    set (e.g. a recent UFC debut). Predicts based on betting odds implied
+    probability alone, since the ML model can't be used without fighter stats.
+    """
+    odds = get_live_odds(fighter_a, fighter_b)
+
+    winner = fighter_a if odds[fighter_a] <= odds[fighter_b] else fighter_b
+    confidence = implied_probability(odds[winner])
+
+    return {
+        "winner": winner,
+        "confidence": round(confidence, 4),
+        "method": "odds_only",
+        "note": "One or both fighters don't have enough fight history in our dataset yet, so this prediction is based on betting odds alone, not our trained model."
+    }
 
 def predict_winner(fighter_a: str, fighter_b: str, weight_class_encoded: int,
                     title_bout: bool, num_rounds: int) -> dict:
     """
     Runs the full prediction pipeline for a matchup between two fighters and
-    returns the predicted winner and confidence score.
+    returns the predicted winner and confidence score. Falls back to an
+    odds-only prediction if either fighter lacks historical data.
     """
-    row, corner_mapping = build_feature_row(fighter_a, fighter_b, weight_class_encoded, title_bout, num_rounds)
+    try:
+        row, corner_mapping = build_feature_row(fighter_a, fighter_b, weight_class_encoded, title_bout, num_rounds)
+    except ValueError as e:
+        if "No fight history" in str(e):
+            return predict_from_odds_only(fighter_a, fighter_b)
+        raise  # re-raise anything else (e.g. no scheduled fight found) unchanged
 
-    prediction = model.predict(row)[0]  # 0 = Red, 1 = Blue
-    probabilities = model.predict_proba(row)[0]  # [P(Red), P(Blue)]
+    prediction = model.predict(row)[0]
+    probabilities = model.predict_proba(row)[0]
 
     predicted_corner = "Red" if prediction == 0 else "Blue"
     winner_name = corner_mapping[predicted_corner]
     confidence = probabilities[prediction]
 
-    return {"winner": str(winner_name), "confidence": round(float(confidence), 4)}
+    return {"winner": winner_name, "confidence": round(float(confidence), 4), "method": "model"}
