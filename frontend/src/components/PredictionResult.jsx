@@ -20,8 +20,6 @@ function PredictionResult({ fight, onBack }) {
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
 
-    // Runs once when this component mounts, using the selected fight to
-    // actually request a prediction from the backend
     useEffect(() => {
         const runPrediction = async () => {
             try {
@@ -56,13 +54,16 @@ function PredictionResult({ fight, onBack }) {
         return <p>Predicting winner...</p>;
     }
 
-    // Figure out which fighter's image to show alongside the winner's name
     const winnerImage =
         result.winner === fight.fighter_a ? fight.fighterAImage : fight.fighterBImage;
 
     return (
         <div className="prediction-result">
             <h2>Predicted Winner</h2>
+
+            {result.method === "odds_only" && (
+                <p className="fallback-note">{result.note}</p>
+            )}
 
             {winnerImage && (
                 <img src={winnerImage} alt={result.winner} className="winner-image" />

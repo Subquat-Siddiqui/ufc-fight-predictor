@@ -59,3 +59,13 @@
 .prediction-result button:hover {
   background-color: var(--color-primary-hover);
 }
+
+.fallback-note {
+  font-size: 13px;
+  color: #92400e;
+  background-color: #fef3c7;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  text-align: left;
+}
