@@ -31,7 +31,7 @@ ENV/
 .ipynb_checkpoints
 
 # Data & Models - CRITICAL to ignore these
-ml_core/models/
+#ml_core/models/
 
 # IDE
 .vscode/
